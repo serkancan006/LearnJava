@@ -1,17 +1,24 @@
-package org.example.todoApp;
+package org.example.todoApp.repositories;
+
+import org.example.todoApp.DatabaseContext;
+import org.example.todoApp.models.Note;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class NoteRepository {
-    public List<Note> getAllNotes() throws SQLException {
+
+    // Kullanıcının notlarını al
+    public List<Note> getNotesByUser(int userId) throws SQLException {
         List<Note> notes = new ArrayList<>();
-        String sql = "SELECT * FROM Notes";
+        String sql = "SELECT * FROM Notes WHERE UserId = ?";  // Kullanıcı ID'sine göre notları getir
 
         try (Connection conn = DatabaseContext.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, userId);  // Kullanıcı ID'sini sorguya ekle
+            ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
                 notes.add(new Note(
@@ -24,18 +31,22 @@ public class NoteRepository {
         return notes;
     }
 
-    public void addNote(String title, String description) throws SQLException {
-        String sql = "INSERT INTO Notes (NotAdi, NotAciklama) VALUES (?, ?)";
+
+    // Not ekle
+    public void addNote(int userId, String title, String description) throws SQLException {
+        String sql = "INSERT INTO Notes (NotAdi, NotAciklama, UserId) VALUES (?, ?, ?)";
 
         try (Connection conn = DatabaseContext.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, title);
             pstmt.setString(2, description);
+            pstmt.setInt(3, userId);
             pstmt.executeUpdate();
         }
     }
 
+    // Not sil
     public void deleteNote(int id) throws SQLException {
         String sql = "DELETE FROM Notes WHERE Id = ?";
 
