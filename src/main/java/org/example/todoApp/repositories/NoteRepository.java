@@ -2,6 +2,7 @@ package org.example.todoApp.repositories;
 
 import org.example.todoApp.DatabaseContext;
 import org.example.todoApp.models.Note;
+import org.example.todoApp.models.UserNote;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -31,6 +32,30 @@ public class NoteRepository {
         return notes;
     }
 
+    public List<UserNote> getAllUserNotes() throws SQLException {
+        List<UserNote> userNotes = new ArrayList<>();
+
+        String sql = "SELECT n.id, n.notAdi, n.notAciklama, u.username " +
+                "FROM Notes n " +
+                "JOIN Users u ON n.userId = u.id";
+
+        try (Connection conn = DatabaseContext.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                userNotes.add(new UserNote(
+                        rs.getInt("Id"),
+                        rs.getString("NotAdi"),
+                        rs.getString("NotAciklama"),
+                        rs.getString("username")
+                ));
+            }
+        }
+
+        return userNotes;
+    }
+
 
     // Not ekle
     public void addNote(int userId, String title, String description) throws SQLException {
@@ -57,4 +82,21 @@ public class NoteRepository {
             pstmt.executeUpdate();
         }
     }
+
+    public int getNoteCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Notes";
+
+        try (Connection conn = DatabaseContext.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+
+        return 0;
+    }
+
+
 }
