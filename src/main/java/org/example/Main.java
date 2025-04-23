@@ -4,6 +4,7 @@ import org.example.todoApp.DatabaseInitializer;
 import org.example.todoApp.models.Note;
 import org.example.todoApp.models.User;
 import org.example.todoApp.models.UserNote;
+import org.example.todoApp.models.UserNoteCount;
 import org.example.todoApp.repositories.NoteRepository;
 import org.example.todoApp.repositories.UserRepository;
 
@@ -120,6 +121,9 @@ public class Main {
                     showAllNotesByUser();
                     break;
                 case 4:
+                    showUserNoteCount();
+                    break;
+                case 5:
                     return;
                 default:
                     System.out.println("Geçersiz seçenek!");
@@ -133,7 +137,8 @@ public class Main {
         System.out.println("1. Toplam Kullanıcı Sayısını Göster");
         System.out.println("2. Toplam Note Sayısını Göster");
         System.out.println("3. Tüm Notları KUllanıcıları ile Göster");
-        System.out.println("4. Çıkış");
+        System.out.println("4. Kullanıcılara ait not sayılarını göster");
+        System.out.println("5. Çıkış");
     }
 
     // Toplam Kullanıcı sayısı
@@ -162,6 +167,16 @@ public class Main {
             List<UserNote> result = noteRepository.getAllUserNotes();
             result.forEach(System.out::println);
         } catch (SQLException e) {
+            handleSQLException(e);
+        }
+    }
+
+    // Kullanıcılara ait not sayıları
+    private static void showUserNoteCount(){
+        try {
+            List<UserNoteCount> result = userRepository.getUsersWithNoteCount();
+            result.forEach(System.out::println);
+        }catch (SQLException e){
             handleSQLException(e);
         }
     }

@@ -2,11 +2,14 @@ package org.example.todoApp.repositories;
 
 import org.example.todoApp.DatabaseContext;
 import org.example.todoApp.models.User;
+import org.example.todoApp.models.UserNoteCount;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserRepository {
-    // Varolan kullanıcı adı kontrolü
+
     public boolean existsByUsername(String username) throws SQLException {
         String sql = "SELECT 1 FROM Users WHERE Username = ?";
         try (Connection conn = DatabaseContext.getConnection();
@@ -62,5 +65,31 @@ public class UserRepository {
         }
 
         return 0;
+    }
+
+    public List<UserNoteCount> getUsersWithNoteCount() throws SQLException {
+        List<UserNoteCount> result = new ArrayList<>();
+        // Left join çünkü notu olmayan kullanıcılarda olabilirdi.
+        String sql = """
+            SELECT u.Username, COUNT(n.Id) AS NoteCount
+            FROM Users u
+            LEFT JOIN Notes n ON u.Id = n.UserId
+            GROUP BY u.Id, u.Username
+            ORDER BY u.Username
+            """;
+
+        try (Connection conn = DatabaseContext.getConnection();
+             PreparedStatement p = conn.prepareStatement(sql);
+             ResultSet rs = p.executeQuery()) {
+
+            while (rs.next()) {
+                result.add(new UserNoteCount(
+                        rs.getString("Username"),
+                        rs.getInt("NoteCount")
+                ));
+            }
+        }
+
+        return result;
     }
 }
