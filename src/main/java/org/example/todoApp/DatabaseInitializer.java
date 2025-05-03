@@ -1,13 +1,21 @@
 package org.example.todoApp;
 
+import com.google.inject.Inject;
+
 import java.sql.*;
 
 public class DatabaseInitializer {
+    private final DatabaseContext databaseContext;
 
-    public static void initialize() throws SQLException {
-        try (Connection conn = DatabaseContext.getConnection()) {
+    @Inject
+    public DatabaseInitializer(DatabaseContext databaseContext){
+        this.databaseContext = databaseContext;
+    }
+
+    public void initialize() throws SQLException {
+        try (Connection conn = databaseContext.getConnection()) {
             // İlk olarak Users tablosunu kontrol et ve oluştur
-            if (!tableExists(conn, "Users")) {
+            if (tableExists(conn, "Users")) {
                 try (Statement stmt = conn.createStatement()) {
                     String createUsers = """
                         CREATE TABLE Users (
@@ -25,7 +33,7 @@ public class DatabaseInitializer {
             }
 
             // Sonra Notes tablosunu kontrol et ve oluştur
-            if (!tableExists(conn, "Notes")) {
+            if (tableExists(conn, "Notes")) {
                 try (Statement stmt = conn.createStatement()) {
                     String createNotes = """
                         CREATE TABLE Notes (
@@ -47,10 +55,10 @@ public class DatabaseInitializer {
         }
     }
     // tablo var mı yok mu kontrol et
-    private static boolean tableExists(Connection conn, String tableName) throws SQLException {
+    private boolean tableExists(Connection conn, String tableName) throws SQLException {
         DatabaseMetaData meta = conn.getMetaData();
         try (ResultSet rs = meta.getTables(null, null, tableName, new String[]{"TABLE"})) {
-            return rs.next();
+            return !rs.next();
         }
     }
 }

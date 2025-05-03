@@ -1,25 +1,43 @@
 package org.example;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import jakarta.inject.Inject;
 import org.example.todoApp.DatabaseInitializer;
 import org.example.todoApp.models.Note;
 import org.example.todoApp.models.User;
 import org.example.todoApp.models.UserNote;
 import org.example.todoApp.models.UserNoteCount;
-import org.example.todoApp.repositories.NoteRepository;
-import org.example.todoApp.repositories.UserRepository;
+import org.example.todoApp.repositories.Interfaces.INoteRepository;
+import org.example.todoApp.repositories.Interfaces.IUserRepository;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Scanner;
 
 public class Main {
-    private static final Scanner scanner = new Scanner(System.in);
-    private static final UserRepository userRepository = new UserRepository();
-    private static final NoteRepository noteRepository = new NoteRepository();
+    private final Scanner scanner;
+    private final IUserRepository userRepository;
+    private final INoteRepository noteRepository;
+    private final DatabaseInitializer databaseInitializer;
+
+    @Inject
+    public Main(IUserRepository userRepository, INoteRepository noteRepository, Scanner scanner, DatabaseInitializer databaseInitializer){
+        this.userRepository = userRepository;
+        this.noteRepository = noteRepository;
+        this.scanner = scanner;
+        this.databaseInitializer =databaseInitializer;
+    }
 
     public static void main(String[] args) {
+        Injector injector = Guice.createInjector(new AppContext());
+        Main mainApp = injector.getInstance(Main.class);
+        mainApp.run();
+    }
+
+    private void run() {
         try {
-            DatabaseInitializer.initialize();
+            databaseInitializer.initialize();
         } catch (SQLException e) {
             System.err.println("Veritabanı başlatılamadı: " + e.getMessage());
             return;
@@ -29,26 +47,20 @@ public class Main {
             showMainMenu();
             int mainChoice = getUserChoice();
             switch (mainChoice) {
-                case 1:
-                    login();
-                    break;
-                case 2:
-                    register();
-                    break;
-                case 3:
-                    manageOther();
-                    break;
-                case 4:
+                case 1 -> login();
+                case 2 -> register();
+                case 3 -> manageOther();
+                case 4 -> {
                     System.out.println("Çıkılıyor...");
                     return;
-                default:
-                    System.out.println("Geçersiz seçenek!");
+                }
+                default -> System.out.println("Geçersiz seçenek!");
             }
         }
     }
 
     // Main menüsünü göster
-    private static void showMainMenu() {
+    private void showMainMenu() {
         System.out.println("\nAna Menü:");
         System.out.println("1. Giriş Yap");
         System.out.println("2. Kayıt Ol");
@@ -57,14 +69,14 @@ public class Main {
     }
 
     // Kullanıcıdan seçim almak
-    private static int getUserChoice() {
+    private int getUserChoice() {
         int choice = scanner.nextInt();
         scanner.nextLine();  
         return choice;
     }
 
     // Kullanıcı giriş işlemleri
-    private static void login() {
+    private void login() {
         System.out.println("Kullanıcı Adınızı Girin: ");
         String username = scanner.nextLine();
         System.out.println("Şifrenizi Girin: ");
@@ -84,7 +96,7 @@ public class Main {
     }
 
     // Kullanıcı kayıt işlemleri
-    private static void register() {
+    private void register() {
         System.out.print("Kullanıcı Adınızı Girin: ");
         String username = scanner.nextLine();
         System.out.print("Şifrenizi Girin: ");
@@ -106,7 +118,7 @@ public class Main {
     }
 
     // Manage Other
-    private static void manageOther() {
+    private void manageOther() {
         while (true) {
             showOtherMenu();
             int choice = getUserChoice();
@@ -132,7 +144,7 @@ public class Main {
     }
 
     // OTher menüsünü göster
-    private static void showOtherMenu() {
+    private void showOtherMenu() {
         System.out.println("\nDiğer Yöntemler Yönetim Menüsü:");
         System.out.println("1. Toplam Kullanıcı Sayısını Göster");
         System.out.println("2. Toplam Note Sayısını Göster");
@@ -142,7 +154,7 @@ public class Main {
     }
 
     // Toplam Kullanıcı sayısı
-    private static void showTotalUser(){
+    private void showTotalUser(){
         try {
             int result = userRepository.getUserCount();
             System.out.println("Toplam Kullanıcı Sayısı = " + result);
@@ -152,7 +164,7 @@ public class Main {
     }
 
     // Toplam Not sayısı
-    private static void showTotalNote(){
+    private void showTotalNote(){
         try {
             int result = noteRepository.getNoteCount();
             System.out.println("Toplam Not Sayısı = " + result);
@@ -162,7 +174,7 @@ public class Main {
     }
 
     // Tüm notları kullanıcıları ile göster
-    private static void showAllNotesByUser(){
+    private void showAllNotesByUser(){
         try {
             List<UserNote> result = noteRepository.getAllUserNotes();
             result.forEach(System.out::println);
@@ -172,7 +184,7 @@ public class Main {
     }
 
     // Kullanıcılara ait not sayıları
-    private static void showUserNoteCount(){
+    private void showUserNoteCount(){
         try {
             List<UserNoteCount> result = userRepository.getUsersWithNoteCount();
             result.forEach(System.out::println);
@@ -182,7 +194,7 @@ public class Main {
     }
 
     // Not yönetimi işlemleri
-    private static void manageNotes(User user) {
+    private void manageNotes(User user) {
         while (true) {
             showNoteMenu();
             int choice = getUserChoice();
@@ -197,6 +209,9 @@ public class Main {
                     deleteNote();
                     break;
                 case 4:
+                    showNotesFilterDescription(user);
+                    break;
+                case 5:
                     return;
                 default:
                     System.out.println("Geçersiz seçenek!");
@@ -205,16 +220,17 @@ public class Main {
     }
 
     // Not menüsünü göster
-    private static void showNoteMenu() {
+    private void showNoteMenu() {
         System.out.println("\nNot Yönetim Menüsü:");
         System.out.println("1. Notları Göster");
         System.out.println("2. Yeni Not Ekle");
         System.out.println("3. Not Sil");
-        System.out.println("4. Çıkış");
+        System.out.println("4. Notları Göster açıklama ile filtrele");
+        System.out.println("5. Çıkış");
     }
 
     // Kullanıcı notlarını göster
-    private static void showNotes(User user) {
+    private void showNotes(User user) {
         try {
             List<Note> notes = noteRepository.getNotesByUser(user.getId());
             if (notes.isEmpty()) {
@@ -228,7 +244,7 @@ public class Main {
     }
 
     // Yeni not ekle
-    private static void addNote(User user) {
+    private void addNote(User user) {
         showNotes(user);
         System.out.println("Not Başlığını Girin: ");
         String title = scanner.nextLine();
@@ -244,10 +260,10 @@ public class Main {
     }
 
     // Not sil
-    private static void deleteNote() {
+    private void deleteNote() {
         System.out.println("Silmek istediğiniz notun ID'sini girin: ");
         int noteId = scanner.nextInt();
-        scanner.nextLine();  // buffer temizleme
+        scanner.nextLine();
 
         try {
             noteRepository.deleteNote(noteId);
@@ -257,8 +273,25 @@ public class Main {
         }
     }
 
+    // Kullanıcı notları filtreleyerek  görüntüle
+    private void showNotesFilterDescription(User user){
+        try {
+            System.out.println("Not açıklaması ne içermeli: ");
+            String description = scanner.next();
+            scanner.nextLine();
+            List<Note> notes = noteRepository.getNotesByUser(user.getId(), description);
+            if (notes.isEmpty()) {
+                System.out.println("Hiç not bulunamadı.");
+            } else {
+                notes.forEach(System.out::println);
+            }
+        } catch (SQLException e) {
+            handleSQLException(e);
+        }
+    }
+
     // SQL hatalarını yönet
-    private static void handleSQLException(SQLException e) {
+    private void handleSQLException(SQLException e) {
         System.err.println("Bir hata oluştu: " + e.getMessage());
     }
 }
