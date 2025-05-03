@@ -1,9 +1,11 @@
 package org.example.todoApp;
 
 import com.google.inject.Inject;
+import org.example.anatations.Component;
 
 import java.sql.*;
 
+@Component
 public class DatabaseInitializer {
     private final DatabaseContext databaseContext;
 

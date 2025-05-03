@@ -1,7 +1,10 @@
 package org.example.kafka;
 
+import org.example.anatations.Service;
+
 import java.util.Scanner;
 
+@Service
 public class KafkaService {
     public void runKafkaApp() {
         String bootstrapServers = "localhost:9092";

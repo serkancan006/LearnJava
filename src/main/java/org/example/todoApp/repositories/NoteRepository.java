@@ -1,6 +1,7 @@
 package org.example.todoApp.repositories;
 
 import com.google.inject.Inject;
+import org.example.anatations.Repository;
 import org.example.todoApp.DatabaseContext;
 import org.example.todoApp.models.Note;
 import org.example.todoApp.models.UserNote;
@@ -10,6 +11,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class NoteRepository implements INoteRepository {
     private final DatabaseContext databaseContext;
 
